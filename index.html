@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Your Notes Everywhere — Obsidian + Git Sync Guide</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#161c24; --panel-2:#1c242e; --ink:#e8edf2; --muted:#9aa7b4;
+    --line:#2a333f; --accent:#7c5cff; --accent-2:#4dd0a7; --warn:#f0a93b; --code-bg:#0b0f14;
+    --max:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  a{color:var(--accent-2); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--max); margin:0 auto; padding:0 20px}
+
+  header.hero{
+    background:
+      radial-gradient(1200px 400px at 80% -10%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(900px 360px at 0% 0%, rgba(77,208,167,.14), transparent 55%),
+      var(--panel);
+    border-bottom:1px solid var(--line);
+    padding:54px 0 40px;
+  }
+  .eyebrow{color:var(--accent-2); font-weight:600; letter-spacing:.08em; text-transform:uppercase; font-size:12.5px; margin:0 0 12px}
+  h1{font-size:34px; line-height:1.18; margin:0 0 14px; letter-spacing:-.02em}
+  .lede{color:var(--muted); font-size:18px; max-width:660px; margin:0}
+  .byline{margin-top:22px; color:var(--muted); font-size:13.5px}
+
+  main{padding:34px 0 80px}
+  section{padding:30px 0; border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  h2{font-size:23px; letter-spacing:-.01em; margin:0 0 6px; scroll-margin-top:16px}
+  h2 .num{color:var(--accent); font-variant-numeric:tabular-nums; margin-right:10px}
+  h3{font-size:16.5px; margin:22px 0 8px; color:var(--ink)}
+  p{margin:12px 0}
+  ul,ol{margin:12px 0; padding-left:22px}
+  li{margin:7px 0}
+  strong{color:#fff}
+
+  /* TOC */
+  nav.toc{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:18px 20px; margin:26px 0 4px;
+  }
+  nav.toc p{margin:0 0 10px; font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.07em}
+  nav.toc ol{margin:0; padding-left:20px; columns:2; column-gap:28px}
+  nav.toc li{margin:5px 0; break-inside:avoid}
+  @media(max-width:560px){ nav.toc ol{columns:1} }
+
+  /* callouts */
+  .callout{border-radius:12px; padding:14px 16px; margin:18px 0; border:1px solid var(--line); background:var(--panel-2)}
+  .callout .tag{font-weight:700; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; display:block; margin-bottom:4px}
+  .callout.goal{border-color:rgba(77,208,167,.4)} .callout.goal .tag{color:var(--accent-2)}
+  .callout.note{border-color:rgba(124,92,255,.4)} .callout.note .tag{color:#b6a6ff}
+  .callout.warn{border-color:rgba(240,169,59,.45)} .callout.warn .tag{color:var(--warn)}
+
+  /* code */
+  pre{
+    background:var(--code-bg); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; overflow-x:auto; margin:14px 0;
+  }
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px}
+  pre code{color:#cfe3ff}
+  p code,li code,td code{background:#0b0f14; border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:13px; color:#d7c7ff}
+
+  /* table */
+  .tablewrap{overflow-x:auto; margin:16px 0}
+  table{border-collapse:collapse; width:100%; min-width:520px}
+  th,td{border:1px solid var(--line); padding:11px 13px; text-align:left; vertical-align:top; font-size:14.5px}
+  th{background:var(--panel-2); color:#fff; font-size:13px; text-transform:uppercase; letter-spacing:.04em}
+  td .pill{display:inline-block; font-size:11.5px; font-weight:700; border-radius:20px; padding:2px 9px}
+  .pill.free{background:rgba(77,208,167,.15); color:var(--accent-2)}
+  .pill.paid{background:rgba(124,92,255,.16); color:#b6a6ff}
+
+  /* platform chips */
+  .chip{display:inline-block; font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:6px; margin-right:6px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted)}
+
+  .step{display:flex; gap:14px; align-items:baseline}
+  .step .dot{flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:rgba(124,92,255,.16); color:#b6a6ff; font-weight:700; font-size:13px; display:inline-grid; place-items:center; border:1px solid rgba(124,92,255,.4)}
+
+  footer{color:var(--muted); font-size:13px; padding:26px 0 50px; text-align:center}
+  .kquick{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:6px 22px 14px}
+  hr.soft{border:0; border-top:1px solid var(--line); margin:24px 0}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Obsidian · Git · Multi-device</p>
+    <h1>Your notes, the same on every device</h1>
+    <p class="lede">A practical guide to keeping one Obsidian vault in sync across your main computer, a second computer, and your phone — using free, open tools (the same setup Jon runs).</p>
+    <p class="byline">Put together for Brandon · Built from Jon's working setup</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <nav class="toc" aria-label="Table of contents">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#end-state">What you'll end up with</a></li>
+      <li><a href="#core">The core idea</a></li>
+      <li><a href="#repo">Step 1 — Create your repo</a></li>
+      <li><a href="#main">Step 2 — Your main computer</a></li>
+      <li><a href="#second">Step 3 — A second computer</a></li>
+      <li><a href="#phone">Step 4 — Your phone</a></li>
+      <li><a href="#gitignore">The .gitignore you want</a></li>
+      <li><a href="#habits">Habits &amp; gotchas</a></li>
+      <li><a href="#jon-config">Jon's actual config</a></li>
+      <li><a href="#quickstart">Quick-start checklist</a></li>
+    </ol>
+  </nav>
+
+  <section id="end-state">
+    <h2><span class="num">①</span>What you'll end up with</h2>
+    <p>One <strong>private repository on GitHub</strong> becomes the single source of truth for your vault. Every device you own holds a full copy of your notes and quietly syncs with that repo:</p>
+    <ul>
+      <li><strong>Edit anywhere</strong> — your laptop, a desktop, your phone — and the change flows to the others.</li>
+      <li><strong>Full history</strong> — every save is a version you can roll back to. Nothing is ever truly lost.</li>
+      <li><strong>Works offline</strong> — each device has the real files locally; it syncs when it's back online.</li>
+      <li><strong>You own the data</strong> — plain Markdown files in your own GitHub account. No lock-in.</li>
+      <li><strong>Free</strong> — for the computer-to-computer part. (Phone has a free path and a paid easy-button — both below.)</li>
+    </ul>
+    <div class="callout goal">
+      <span class="tag">Your goal</span>
+      Open the same notes on your phone and on a second computer that you have on your main one. That's exactly what this delivers. The trick is just: <em>one repo, every device talks to it.</em>
+    </div>
+  </section>
+
+  <section id="core">
+    <h2><span class="num">②</span>The core idea (how Jon does it)</h2>
+    <p>Three pieces, that's the whole thing:</p>
+    <ul>
+      <li><strong>Obsidian</strong> — the notes app. Free. Your vault is just a folder of Markdown files on disk.</li>
+      <li><strong>The <code>Obsidian Git</code> plugin</strong> — a community plugin that automatically commits your changes and pushes/pulls them to GitHub on a timer. Set it once and forget it.</li>
+      <li><strong>A private GitHub repo</strong> — the central hub every device syncs with.</li>
+    </ul>
+    <p>Think of GitHub as the hub of a bike wheel and each device as a spoke. A device <em>pulls</em> the latest notes when it starts, you edit, and it <em>commits + pushes</em> your changes back every few minutes. The next device pulls them down. That's it.</p>
+    <p class="muted">Why Git instead of Dropbox/iCloud? Because you get versioned history (undo anything, see what changed when), it handles "edited in two places" gracefully, and your notes stay as portable plain text you fully control.</p>
+  </section>
+
+  <section id="repo">
+    <h2><span class="num">③</span>Step 1 — Create your GitHub repo</h2>
+    <ol>
+      <li>Make a free account at <a href="https://github.com" target="_blank" rel="noopener">github.com</a> if you don't have one.</li>
+      <li>Create a <strong>new repository</strong> — name it something like <code>my-vault</code>, set it to <strong>Private</strong>, and leave it empty (no README).</li>
+      <li>You'll need a way to authenticate. Two easy options:
+        <ul>
+          <li><strong>Personal Access Token (PAT)</strong> — GitHub → <em>Settings → Developer settings → Personal access tokens</em>. Create one with <code>repo</code> scope. You'll paste this into the Obsidian Git plugin (it acts as your password). This is what Jon uses.</li>
+          <li><strong>GitHub CLI</strong> — install <a href="https://cli.github.com" target="_blank" rel="noopener">gh</a> and run <code>gh auth login</code> once per computer. It stores the credential for you so Obsidian never has to ask.</li>
+        </ul>
+      </li>
+    </ol>
+    <div class="callout note">
+      <span class="tag">Tip</span>
+      A token gives whoever holds it access to your repo — treat it like a password. Don't paste it into notes that themselves get synced.
+    </div>
+  </section>
+
+  <section id="main">
+    <h2><span class="num">④</span>Step 2 — Set up your MAIN computer</h2>
+    <p>This is the device whose notes you want everywhere. <span class="chip">macOS</span><span class="chip">Windows</span></p>
+
+    <h3>Install the pieces</h3>
+    <ol>
+      <li><strong>Install Git.</strong>
+        <ul>
+          <li>Mac: it's usually already there. If not, install <a href="https://brew.sh" target="_blank" rel="noopener">Homebrew</a> then <code>brew install git</code>, or just run <code>git --version</code> and macOS will offer to install it.</li>
+          <li>Windows: download <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">Git for Windows</a> and install with defaults.</li>
+        </ul>
+      </li>
+      <li><strong>Install Obsidian</strong> from <a href="https://obsidian.md" target="_blank" rel="noopener">obsidian.md</a> and open your existing vault (or make a new one).</li>
+      <li><strong>Install the Obsidian Git plugin:</strong> Obsidian → <em>Settings → Community plugins → Browse</em> → search <strong>"Git"</strong> (by Vinzent) → Install → Enable.</li>
+    </ol>
+
+    <h3>Connect the vault to your repo</h3>
+    <p>Open a terminal in your vault folder and link it to the repo you made (this also pushes your notes up the first time):</p>
+    <pre><code>cd /path/to/your/vault
+git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/YOUR-USERNAME/my-vault.git
+git push -u origin main</code></pre>
+    <p class="muted">If you used a PAT, Git will ask for a username + password on that first push — paste the token as the password.</p>
+
+    <h3>Turn on automatic sync</h3>
+    <p>In <em>Settings → Community plugins → Git</em>, set these (this mirrors Jon's setup):</p>
+    <ul>
+      <li><strong>Auto-backup (commit + push) every <code>10</code> minutes</strong> — saves and uploads your changes on a timer.</li>
+      <li><strong>Pull updates on startup: ON</strong> — grabs the latest from your other devices when Obsidian opens.</li>
+      <li><strong>Auto-pull every <code>10</code> minutes</strong> — keeps you current while you work.</li>
+      <li><strong>Pull before push: ON</strong> — avoids most conflicts automatically.</li>
+      <li><strong>Commit message:</strong> <code>vault backup: {{date}}</code> — tidy, timestamped history.</li>
+    </ul>
+    <div class="callout note">
+      <span class="tag">That's the engine</span>
+      Once this is on, you never think about it again. Edit notes, and every ~10 minutes they're safely on GitHub and on their way to your other devices.
+    </div>
+  </section>
+
+  <section id="second">
+    <h2><span class="num">⑤</span>Step 3 — Add a second computer</h2>
+    <p>Same idea, but instead of pushing an existing vault up, you pull the repo <em>down</em>. <span class="chip">macOS</span><span class="chip">Windows</span></p>
+    <ol>
+      <li>Install <strong>Git</strong> and <strong>Obsidian</strong> (as above).</li>
+      <li><strong>Clone your repo</strong> to a folder:
+        <pre><code>git clone https://github.com/YOUR-USERNAME/my-vault.git</code></pre>
+      </li>
+      <li>In Obsidian, choose <strong>"Open folder as vault"</strong> and pick the folder you just cloned.</li>
+      <li>Install + enable the <strong>Obsidian Git plugin</strong> and apply the <em>same settings</em> as Step 2.</li>
+    </ol>
+    <p>Done — this computer now auto-pulls others' changes and pushes its own. Edits flow both ways automatically.</p>
+  </section>
+
+  <section id="phone">
+    <h2><span class="num">⑥</span>Step 4 — Your phone (pick one path)</h2>
+    <p>The phone is the one spot with a real choice. Pick whichever fits how much fiddling you'll tolerate.</p>
+
+    <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>&nbsp;</th><th>Path A — Obsidian Sync</th><th>Path B — Free, Git-based</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cost</strong></td>
+          <td><span class="pill paid">~$4–8/mo</span></td>
+          <td><span class="pill free">Free</span></td>
+        </tr>
+        <tr>
+          <td><strong>What it is</strong></td>
+          <td>Obsidian's own official sync service. Flip it on, sign in on each device, done.</td>
+          <td>The same Git approach as your computers, extended to the phone.</td>
+        </tr>
+        <tr>
+          <td><strong>iPhone</strong></td>
+          <td>Just works. Best option on iOS.</td>
+          <td>Use the <strong>Working Copy</strong> app to clone the repo, then point the Obsidian app at that folder. Pull/push by hand (or with a one-tap Shortcut). Fiddlier.</td>
+        </tr>
+        <tr>
+          <td><strong>Android</strong></td>
+          <td>Just works.</td>
+          <td>The <strong>Obsidian Git plugin runs natively</strong> on Android — same setup as your computer. Smooth.</td>
+        </tr>
+        <tr>
+          <td><strong>Best for</strong></td>
+          <td>Anyone who wants it to "just work," especially on iPhone.</td>
+          <td>Android users, or anyone who wants zero subscription and the same Git history everywhere.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Path A — Obsidian Sync (easiest)</h3>
+    <ol>
+      <li>In Obsidian on your main computer: <em>Settings → Sync</em> → set up a remote vault, sign into an Obsidian account, turn Sync on.</li>
+      <li>Install the Obsidian app on your phone, sign in, connect to the same remote vault.</li>
+    </ol>
+    <p class="muted">Note: you can run Obsidian Sync <em>and</em> keep the free Git backup on your computers at the same time — Sync for live device-to-device, Git for versioned backup. Many people do exactly that.</p>
+
+    <h3>Path B — Free, Git-based</h3>
+    <ul>
+      <li><strong>Android:</strong> install Obsidian, clone or open the vault, add the <strong>Obsidian Git</strong> plugin, apply the same settings as your computer. That's it.</li>
+      <li><strong>iPhone:</strong> install <a href="https://workingcopy.app" target="_blank" rel="noopener">Working Copy</a> (a Git client for iOS) → clone your repo into it → install the Obsidian app → "Open folder as vault" pointed at the Working Copy folder. Pull when you start, push when you finish (Working Copy can do this with a Shortcut so it's one tap).</li>
+    </ul>
+    <div class="callout warn">
+      <span class="tag">iPhone reality check</span>
+      The Obsidian Git plugin is unreliable on iPhone for anything but tiny vaults — that's why Working Copy (or Obsidian Sync) is the real answer there. Android has no such issue.
+    </div>
+  </section>
+
+  <section id="gitignore">
+    <h2><span class="num">⑦</span>The <code>.gitignore</code> you want</h2>
+    <p>A <code>.gitignore</code> file in your vault tells Git which files <em>not</em> to sync. You want to skip per-device UI state and anything secret, while keeping your notes and your plugin setup (so a new device comes up already configured). Drop this in the root of your vault:</p>
+    <pre><code># Per-device Obsidian UI state (don't sync — causes noise/conflicts)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Temp / backup files
+*.tmp
+*.bak
+
+# Never sync secrets (API keys, tokens, .env files)
+.env
+*.secret</code></pre>
+    <p class="muted">Keep the rest of <code>.obsidian/</code> in the repo — that's how your community plugins and settings travel to every device automatically.</p>
+  </section>
+
+  <section id="habits">
+    <h2><span class="num">⑧</span>Good habits &amp; gotchas</h2>
+    <ul>
+      <li><strong>Let it land before you edit elsewhere.</strong> When you switch devices, give it a moment to pull the latest (or hit the pull button) before you start typing. Editing the <em>same note</em> on two devices that haven't synced is the main way to create a conflict.</li>
+      <li><strong>Push before you close.</strong> On the phone especially, do a manual push when you finish so the change is up before you lock the screen.</li>
+      <li><strong>Conflicts are rare and survivable.</strong> If two devices changed the same note, Git inserts both versions with <code>&lt;&lt;&lt;&lt;</code> / <code>&gt;&gt;&gt;&gt;</code> markers. Open the note, keep the text you want, delete the markers, save. Nothing is lost — both versions are right there.</li>
+      <li><strong>Watch attachments/size on mobile.</strong> Huge image/PDF vaults sync slowly on phones. If yours is media-heavy, Obsidian Sync (Path A) handles it more gracefully than Git on a phone.</li>
+    </ul>
+  </section>
+
+  <section id="jon-config">
+    <h2><span class="num">⑨</span>Jon's actual config (copy this)</h2>
+    <p>For reference, here are the real Obsidian Git settings Jon runs — translated to the underlying values, in case you want to match them exactly:</p>
+    <pre><code>Auto-backup (commit + push)   every 10 minutes
+Auto-pull                     every 10 minutes
+Pull on startup               ON
+Pull before push              ON
+Sync method                   merge
+Commit message                "vault backup: {{date}}"
+Date format                   YYYY-MM-DD HH:mm:ss
+Authentication                GitHub Personal Access Token (stored in the OS keychain)
+Repo                          one private GitHub repo, branch: main</code></pre>
+    <p class="muted">The history ends up looking like a clean stream of <code>vault backup: 2026-06-02 16:27:18</code> commits — every save timestamped and recoverable.</p>
+  </section>
+
+  <section id="quickstart" class="kquick">
+    <h2><span class="num">⑩</span>Quick-start checklist</h2>
+    <ol>
+      <li>Create a free <strong>private GitHub repo</strong>.</li>
+      <li>On your <strong>main computer</strong>: install Git + Obsidian + the <strong>Obsidian Git</strong> plugin.</li>
+      <li>Link the vault to the repo and do the first <code>push</code>.</li>
+      <li>Turn on <strong>auto-backup + auto-pull (10 min)</strong> and <strong>pull on startup</strong>.</li>
+      <li>On a <strong>second computer</strong>: <code>git clone</code> the repo, open as vault, same plugin + settings.</li>
+      <li>On your <strong>phone</strong>: pick <strong>Obsidian Sync</strong> (easy, paid) <em>or</em> <strong>Working Copy</strong> (iPhone) / <strong>Obsidian Git</strong> (Android) (free).</li>
+      <li>Add the <strong>.gitignore</strong>. Done — edit anywhere, it syncs everywhere.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h3>One more thing</h3>
+    <p class="muted">Jon also layers an AI assistant (Claude) on top of this same vault, and uses a separate phone setup for talking to it. That's a different project entirely — you don't need any of it for the goal here. The Git sync above is the whole story for "same files on every device."</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">Made for Brandon · Questions? Ask Jon.</div>
+</footer>
+
+</body>
+</html>
