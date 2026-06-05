@@ -116,6 +116,7 @@
       <li><a href="#phone">Step 4 — Your phone</a></li>
       <li><a href="#gitignore">The .gitignore you want</a></li>
       <li><a href="#habits">Habits &amp; gotchas</a></li>
+      <li><a href="#troubleshoot">Troubleshooting (real snags)</a></li>
       <li><a href="#jon-config">Jon's actual config</a></li>
       <li><a href="#quickstart">Quick-start checklist</a></li>
     </ol>
@@ -311,8 +312,46 @@ Thumbs.db
     </ul>
   </section>
 
+  <section id="troubleshoot">
+    <h2><span class="num">⑨</span>Troubleshooting — the snags I actually hit</h2>
+    <div class="callout note">
+      <span class="tag">Straight talk</span>
+      Setup is mostly smooth, but a handful of things cost me real time getting this running. Here they are with the fixes, so you skip the pain.
+    </div>
+
+    <h3>1. "Authentication failed" when the plugin tries to push (macOS)</h3>
+    <p>The Obsidian Git plugin can't always show a login box, so it just <em>silently fails</em> to authenticate. Two reliable fixes — easiest first:</p>
+    <ul>
+      <li><strong>Use the GitHub CLI.</strong> Install <a href="https://cli.github.com" target="_blank" rel="noopener">gh</a>, then run <code>gh auth login</code> followed by <code>gh auth setup-git</code>. Git now authenticates automatically and the plugin stops asking.</li>
+      <li><strong>Or store a token in your OS keychain</strong> (macOS Keychain / Windows Credential Manager) so HTTPS pushes work without prompts.</li>
+    </ul>
+    <p class="muted">Power-user route (what I ended up on): point Git's <code>GIT_ASKPASS</code> at a tiny helper script so the plugin can feed the token non-interactively. Only worth it if the above two don't stick.</p>
+
+    <h3>2. A freshly-cloned vault on a SECOND computer or phone can't push <span class="chip">you'll hit this</span></h3>
+    <p>A plain <code>git clone</code> over HTTPS has <strong>no saved credentials</strong>, so the very first push fails. On that new device, either run <code>gh auth login</code> + <code>gh auth setup-git</code>, or do one push with the helper wired in:</p>
+    <pre><code>git -c credential.helper='!gh auth git-credential' push origin main</code></pre>
+    <p>After that first authenticated push, it remembers. This is the single most common wall when adding a device.</p>
+
+    <h3>3. You accidentally committed a secret</h3>
+    <p>If a token, <code>.env</code>, or a config file with API keys ever gets committed, <strong>deleting the file later does NOT remove it from history</strong> — it still lives in old commits. So:</p>
+    <ul>
+      <li>Get your <code>.gitignore</code> right <strong>before your first commit</strong> (see section ⑦).</li>
+      <li>If it already happened: <strong>rotate the leaked key</strong> (assume it's burned) and scrub history with <a href="https://github.com/newren/git-filter-repo" target="_blank" rel="noopener"><code>git filter-repo</code></a>. Don't lean on "but the repo is private."</li>
+    </ul>
+
+    <h3>4. Windows: every file shows as "changed," or phantom conflicts appear</h3>
+    <p>That's line-ending churn (Windows CRLF vs. Mac/Linux LF). Set it once per Windows machine:</p>
+    <pre><code>git config --global core.autocrlf input</code></pre>
+
+    <h3>5. "Updates were rejected" / push fails after editing on two devices</h3>
+    <p>Both devices committed and now disagree. Keep <strong>"pull before push" ON</strong> (it's in the recommended settings) and it usually self-heals. If a specific note conflicts, open it — you'll see <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> / <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> markers. Keep the text you want, delete the markers, save, and it pushes clean.</p>
+
+    <h3>6. iPhone + Obsidian Git plugin = flaky</h3>
+    <p>Don't fight it. On iOS use <strong>Working Copy</strong> or <strong>Obsidian Sync</strong> (Step ⑥) instead of the plugin.</p>
+  </section>
+
   <section id="jon-config">
-    <h2><span class="num">⑨</span>Jon's actual config (copy this)</h2>
+    <h2><span class="num">⑩</span>Jon's actual config (copy this)</h2>
     <p>For reference, here are the real Obsidian Git settings Jon runs — translated to the underlying values, in case you want to match them exactly:</p>
     <pre><code>Auto-backup (commit + push)   every 10 minutes
 Auto-pull                     every 10 minutes
@@ -327,7 +366,7 @@ Repo                          one private GitHub repo, branch: main</code></pre>
   </section>
 
   <section id="quickstart" class="kquick">
-    <h2><span class="num">⑩</span>Quick-start checklist</h2>
+    <h2><span class="num">⑪</span>Quick-start checklist</h2>
     <ol>
       <li>Create a free <strong>private GitHub repo</strong>.</li>
       <li>On your <strong>main computer</strong>: install Git + Obsidian + the <strong>Obsidian Git</strong> plugin.</li>
